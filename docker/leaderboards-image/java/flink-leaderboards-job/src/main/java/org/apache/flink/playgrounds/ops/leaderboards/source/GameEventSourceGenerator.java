@@ -17,7 +17,7 @@ import java.util.Random;
  * <p>The stream is produced out-of-order, and includes Watermarks (with no late events).
  *
  */
-public class GameEventGenerator implements SourceFunction<GameEvent> {
+public class GameEventSourceGenerator implements SourceFunction<GameEvent> {
     private static boolean running = true;
     public static final int SLEEP_MILLIS_PER_EVENT = 200;
     private static final int BATCH_SIZE = 5;

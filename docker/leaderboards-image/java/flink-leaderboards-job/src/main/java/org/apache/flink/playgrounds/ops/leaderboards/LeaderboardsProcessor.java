@@ -1,7 +1,7 @@
 package org.apache.flink.playgrounds.ops.leaderboards;
 
 import org.apache.flink.playgrounds.ops.leaderboards.datatypes.GameEvent;
-import org.apache.flink.playgrounds.ops.leaderboards.source.GameEventGenerator;
+import org.apache.flink.playgrounds.ops.leaderboards.source.GameEventSourceGenerator;
 import org.apache.flink.playgrounds.ops.leaderboards.utils.ExerciseBase;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -22,7 +22,7 @@ public class LeaderboardsProcessor extends ExerciseBase {
         env.setParallelism(4);
 
         // start the data generator
-        DataStream<GameEvent> gameEvent = env.addSource(gameEventSourceOrTest(new GameEventGenerator()));
+        DataStream<GameEvent> gameEvent = env.addSource(gameEventSourceOrTest(new GameEventSourceGenerator()));
         printOrTest(gameEvent);
 
         env.execute("Game Events to Leaderboards!");
