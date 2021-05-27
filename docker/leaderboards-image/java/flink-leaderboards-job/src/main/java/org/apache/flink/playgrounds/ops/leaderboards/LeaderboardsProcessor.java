@@ -3,9 +3,8 @@ package org.apache.flink.playgrounds.ops.leaderboards;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.utils.ParameterTool;
-import org.apache.flink.playgrounds.ops.leaderboards.datatypes.GameEvent;
-import org.apache.flink.playgrounds.ops.leaderboards.datatypes.GameEventDeserializationSchema;
-import org.apache.flink.playgrounds.ops.leaderboards.datatypes.GameEventSerializationSchema;
+import org.apache.flink.playgrounds.ops.leaderboards.datatypes.*;
+import org.apache.flink.playgrounds.ops.leaderboards.functions.PlayerScoresProcessFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
@@ -57,13 +56,13 @@ public class LeaderboardsProcessor {
 //                        .withTimestampAssigner((event, timestamp) -> event.getEventTime())
                         )).name("GameEvent Source");
 
-        DataStream<GameEvent> leaderboards = gameEvents.keyBy(e -> e.getPlayerId())
-        .map(new Enrichment());
+        DataStream<PlayerScores> playerScores = gameEvents.keyBy(e -> e.getPlayerId())
+        .process(new PlayerScoresProcessFunction());
 
-        leaderboards
+        playerScores
                 .addSink(new FlinkKafkaProducer<>(
                         outputTopic,
-                        new GameEventSerializationSchema(outputTopic),
+                        new PlayerScoreSerializationSchema(outputTopic),
                         kafkaProps,
                         FlinkKafkaProducer.Semantic.AT_LEAST_ONCE))
                 .name("Leaderboards Sink");
