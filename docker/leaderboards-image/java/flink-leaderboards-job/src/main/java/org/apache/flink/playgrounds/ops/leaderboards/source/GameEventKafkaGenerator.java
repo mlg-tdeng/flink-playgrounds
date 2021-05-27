@@ -33,7 +33,7 @@ public class GameEventKafkaGenerator {
                 GameEvent gameEvent = new GameEvent(id + i, true);
                 startEvents.add(gameEvent);
                 // the start times may be in order, but let's not assume that
-                maxStartTime = Math.max(maxStartTime, gameEvent.startTime.toEpochMilli());
+                maxStartTime = Math.max(maxStartTime, gameEvent.startTime);
             }
 
             // enqueue the corresponding END events
