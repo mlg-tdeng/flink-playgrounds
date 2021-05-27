@@ -31,7 +31,7 @@ public class GameEvent implements Comparable<GameEvent>, Serializable {
     public boolean isStart;
     public Instant endTime;
     public Instant startTime;
-    public long playId;
+    public long playerId;
     public long gameId;
 
     /**
@@ -50,7 +50,7 @@ public class GameEvent implements Comparable<GameEvent>, Serializable {
 
         this.gameId = gameId;
         this.isStart = isStart;
-        this.playId = g.driverId();
+        this.playerId = g.driverId();
         this.startTime = g.startTime();
         this.endTime = isStart ? Instant.ofEpochMilli(0) : g.endTime();
         this.teamId = g.teamId();
@@ -66,7 +66,7 @@ public class GameEvent implements Comparable<GameEvent>, Serializable {
     public GameEvent(long gameId, long playerId, boolean isStart, long gameFranchiseId, short gameMode,
                      long teamId, Instant startTime, Instant endTime, short win, long totalKills) {
         this.gameId = gameId;
-        this.playId = playerId;
+        this.playerId = playerId;
         this.gameFranchiseId = gameFranchiseId;
         this.gameMode = gameMode;
         this.teamId = teamId;
@@ -85,7 +85,7 @@ public class GameEvent implements Comparable<GameEvent>, Serializable {
                 endTime.toString() + "," +
                 "(game)" + gameFranchiseId + "," +
                 "(mode)" + gameMode + "," +
-                "(player)" + playId + "," +
+                "(player)" + playerId + "," +
                 "(team)" + teamId + "," +
                 "(win?)" + win + "," +
                 "(total kills)" + totalKills;
@@ -132,6 +132,10 @@ public class GameEvent implements Comparable<GameEvent>, Serializable {
         else {
             return endTime.toEpochMilli();
         }
+    }
+
+    public long getPlayerId() {
+        return playerId;
     }
 
     @Override

@@ -1,6 +1,6 @@
 package org.apache.flink.playgrounds.ops.leaderboards.source;
 
-import akka.serialization.ByteArraySerializer;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.playgrounds.ops.leaderboards.datatypes.GameEvent;
 import org.apache.flink.playgrounds.ops.leaderboards.datatypes.GameEventSerializationSchema;
@@ -16,7 +16,7 @@ public class GameEventKafkaGenerator {
 
     public static void main(String[] args) throws Exception {
         final ParameterTool params = ParameterTool.fromArgs(args);
-        String topic = params.get("topic", "game_events");
+        String topic = params.get("topic", "input");
 
         Properties kafkaProps = createKafkaProperties(params);
 
