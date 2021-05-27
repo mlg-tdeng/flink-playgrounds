@@ -1,6 +1,5 @@
 package org.apache.flink.playgrounds.ops.leaderboards.datatypes;
 
-
 import org.apache.flink.playgrounds.ops.leaderboards.utils.DataGenerator;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
