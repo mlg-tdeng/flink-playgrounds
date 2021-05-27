@@ -4,7 +4,7 @@ import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.playgrounds.ops.leaderboards.datatypes.*;
-import org.apache.flink.playgrounds.ops.leaderboards.functions.LeaderboardsProcessFunction;
+import org.apache.flink.playgrounds.ops.leaderboards.functions.PlayerScoresProcessFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
@@ -57,7 +57,7 @@ public class LeaderboardsProcessor {
                         )).name("GameEvent Source");
 
         DataStream<PlayerScores> playerScores = gameEvents.keyBy(e -> e.getPlayerId())
-        .process(new LeaderboardsProcessFunction());
+        .process(new PlayerScoresProcessFunction());
 
         playerScores
                 .addSink(new FlinkKafkaProducer<>(

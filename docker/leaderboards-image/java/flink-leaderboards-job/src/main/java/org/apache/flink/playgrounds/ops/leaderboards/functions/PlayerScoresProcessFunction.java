@@ -8,7 +8,7 @@ import org.apache.flink.playgrounds.ops.leaderboards.datatypes.PlayerScores;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 
-public class LeaderboardsProcessFunction extends KeyedProcessFunction<Long, GameEvent, PlayerScores> {
+public class PlayerScoresProcessFunction extends KeyedProcessFunction<Long, GameEvent, PlayerScores> {
     private ValueState<PlayerScores> playerScoresState;
 
     @Override
