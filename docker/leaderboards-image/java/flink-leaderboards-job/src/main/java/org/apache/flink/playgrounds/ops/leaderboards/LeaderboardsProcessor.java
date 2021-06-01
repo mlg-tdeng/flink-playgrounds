@@ -4,6 +4,7 @@ import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.playgrounds.ops.leaderboards.datatypes.*;
+import org.apache.flink.playgrounds.ops.leaderboards.functions.BackpressureMap;
 import org.apache.flink.playgrounds.ops.leaderboards.functions.PlayerScoresProcessFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -56,8 +57,19 @@ public class LeaderboardsProcessor {
 //                        .withTimestampAssigner((event, timestamp) -> event.getEventTime())
                         )).name("GameEvent Source");
 
+        if (inflictBackpressure) {
+            // Force a network shuffle so that the backpressure will affect the buffer pools
+            gameEvents = gameEvents
+                    .keyBy(GameEvent::getPlayerId)
+                    .map(new BackpressureMap())
+                    .name("Backpressure");
+        }
+
         DataStream<PlayerScores> playerScores = gameEvents.keyBy(e -> e.getPlayerId())
-        .process(new PlayerScoresProcessFunction());
+        .process(new PlayerScoresProcessFunction())
+                .name("Process Game Events to Player Scores");
+
+
 
         playerScores
                 .addSink(new FlinkKafkaProducer<>(
@@ -65,9 +77,9 @@ public class LeaderboardsProcessor {
                         new PlayerScoreSerializationSchema(outputTopic),
                         kafkaProps,
                         FlinkKafkaProducer.Semantic.AT_LEAST_ONCE))
-                .name("Leaderboards Sink");
+                .name("Player Scores Sink");
 
-        env.execute("Game Events to Leaderboards!");
+        env.execute("Game Events to Player Scores!");
     }
 
     public static class Enrichment implements MapFunction<GameEvent, GameEvent> {
