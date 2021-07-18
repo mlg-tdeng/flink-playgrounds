@@ -141,7 +141,7 @@ under the License.
 							</filters>
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>org.apache.flink.playgrounds.ops.leaderboards.LeaderboardsProcessor</mainClass>
+									<mainClass>org.apache.flink.playgrounds.score.keeper.MainApplication</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>
