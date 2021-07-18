@@ -39,10 +39,10 @@ public class Score implements Comparable<Score>, Serializable {
     /**
      * Invent a Score
      */
-    public Score(long leaderboardsId) {
-        DataGenerator g = new DataGenerator(leaderboardsId);
+    public Score(long seed) {
+        DataGenerator g = new DataGenerator(seed);
 
-        this.leaderboardsId = leaderboardsId;
+        this.leaderboardsId = g.leaderboardsId();
         this.entityId = g.entityId();
         this.eventTime = g.eventTime().toEpochMilli();
         this.leaderboardsType = g.leaderboardsType();

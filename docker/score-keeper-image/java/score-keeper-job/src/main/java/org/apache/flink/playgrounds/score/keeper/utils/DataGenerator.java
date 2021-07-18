@@ -5,18 +5,24 @@ import java.util.Random;
 
 public class DataGenerator {
 
+    private static final int NUMBER_OF_LEADERBOARDS = 5;
     private static final int NUMBER_OF_ENTITIES = 1000;
     private static final int SECONDS_BETWEEN_ENTITIES = 20;
     private static final Instant beginTime = Instant.parse("2021-01-01T12:00:00.00Z");
 
-    private transient long leaderboardsId;
+    private transient long seed;
 
     /**
      * Create a DataGenerator for the specified leaderboardsId
-     * @param leaderboardsId
+     * @param seed
      */
-    public DataGenerator(long leaderboardsId) {
-        this.leaderboardsId = leaderboardsId;
+    public DataGenerator(long seed) {
+        this.seed = seed;
+    }
+
+    public long leaderboardsId() {
+        Random rnd = new Random(seed);
+        return 2021100000 + rnd.nextInt(NUMBER_OF_LEADERBOARDS);
     }
 
     /**
@@ -24,12 +30,12 @@ public class DataGenerator {
      * @return
      */
     public long entityId() {
-        Random rnd = new Random(leaderboardsId);
+        Random rnd = new Random(seed);
         return 2021000000 + rnd.nextInt(NUMBER_OF_ENTITIES);
     }
 
     public Instant eventTime() {
-        return beginTime.plusSeconds(SECONDS_BETWEEN_ENTITIES * leaderboardsId);
+        return beginTime.plusSeconds(SECONDS_BETWEEN_ENTITIES * seed);
     }
 
     public short leaderboardsType() {
@@ -52,7 +58,7 @@ public class DataGenerator {
     }
 
     private long aLong(long min, long max, float mean, float stddev) {
-        Random rnd = new Random(leaderboardsId);
+        Random rnd = new Random(seed);
         long value;
         do {
             value = (long) Math.round((stddev * rnd.nextGaussian()) + mean);

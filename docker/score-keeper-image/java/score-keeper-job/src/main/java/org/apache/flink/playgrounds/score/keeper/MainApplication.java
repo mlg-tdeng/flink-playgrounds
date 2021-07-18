@@ -1,18 +1,24 @@
 package org.apache.flink.playgrounds.score.keeper;
 
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.playgrounds.score.keeper.datatypes.BufferedScoreSerializationSchema;
 import org.apache.flink.playgrounds.score.keeper.datatypes.Score;
 import org.apache.flink.playgrounds.score.keeper.datatypes.ScoreDeserializationSchema;
 import org.apache.flink.playgrounds.score.keeper.datatypes.ScoreSerializationSchema;
 import org.apache.flink.playgrounds.score.keeper.functions.BackpressureMap;
 import org.apache.flink.playgrounds.score.keeper.functions.ScoreProcessFunction;
+import org.apache.flink.playgrounds.score.keeper.functions.ScoreWindowProcessFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.api.common.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
+import java.util.List;
 import java.util.Properties;
 
 public class MainApplication {
@@ -58,16 +64,18 @@ public class MainApplication {
         }
 
         // 2. Process
-        DataStream<Score> bufferedScores = scores.keyBy(e -> e.getLeaderboardsId())
-                .process(new ScoreProcessFunction()).name("Buffer Scores");
+        DataStream<Iterable<Score>> bufferedScores = scores.keyBy(e -> e.getLeaderboardsId())
+//                .window(TumblingEventTimeWindows.of(Time.minutes(5)))
+                .process(new ScoreProcessFunction(Time.minutes(5))).name("Buffer Scores");
 
         // 3. Sink
-        bufferedScores.addSink(new FlinkKafkaProducer<Score>(
-                "output",
-                new ScoreSerializationSchema("output"),
-                kafkaProps,
-                FlinkKafkaProducer.Semantic.AT_LEAST_ONCE
-        )).name("Sink");
+        bufferedScores
+                .addSink(new FlinkKafkaProducer<>(
+                    "output",
+                    new BufferedScoreSerializationSchema("output"),
+                    kafkaProps,
+                    FlinkKafkaProducer.Semantic.AT_LEAST_ONCE
+        )).name("Kafka Sink");
 
         env.execute("Score Keeper!");
     }
