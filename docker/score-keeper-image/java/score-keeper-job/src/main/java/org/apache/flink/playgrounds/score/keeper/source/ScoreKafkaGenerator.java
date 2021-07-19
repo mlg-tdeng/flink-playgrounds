@@ -25,20 +25,18 @@ public class ScoreKafkaGenerator {
         Properties kafkaProps = createKafkaProperties(params);
 
         KafkaProducer<byte[], byte[]> producer = new KafkaProducer<>(kafkaProps);
-        PriorityQueue<Score> endEventQ = new PriorityQueue<>(100);
         long id = 0;
-        long maxStartTime = 0;
 
         while (true) {
             // generate a batch of scores
-            List<Score> scores = new ArrayList<>(BATCH_SIZE);
             for (int i = 1; i <= BATCH_SIZE; i++) {
                 Score score = new Score(id + i);
-                scores.add(score);
 
                 ProducerRecord<byte[], byte[]> record = new ScoreSerializationSchema(topic).serialize(
                         score, null
                 );
+
+                producer.send(record);
             }
 
             // prepare for the next batch
