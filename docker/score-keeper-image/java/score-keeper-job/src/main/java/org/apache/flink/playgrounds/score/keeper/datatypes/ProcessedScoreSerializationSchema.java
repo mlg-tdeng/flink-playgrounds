@@ -7,20 +7,20 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 
 import javax.annotation.Nullable;
 
-public class BufferedScoreSerializationSchema implements KafkaSerializationSchema<Iterable<Score>> {
+public class ProcessedScoreSerializationSchema implements KafkaSerializationSchema<ProcessedScore> {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private String topic;
 
-    public BufferedScoreSerializationSchema() {
+    public ProcessedScoreSerializationSchema() {
 
     }
 
-    public BufferedScoreSerializationSchema(String topic) { this.topic = topic; }
+    public ProcessedScoreSerializationSchema(String topic) { this.topic = topic; }
 
     @Override
     public ProducerRecord<byte[], byte[]> serialize(
-            final Iterable<Score> message, @Nullable final Long timestamp
+            final ProcessedScore message, @Nullable final Long timestamp
     ) {
         try {
             return new ProducerRecord<>(topic, objectMapper.writeValueAsBytes(message));

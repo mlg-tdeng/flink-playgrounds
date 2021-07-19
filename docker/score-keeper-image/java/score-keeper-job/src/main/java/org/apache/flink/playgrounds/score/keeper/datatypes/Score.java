@@ -1,6 +1,5 @@
 package org.apache.flink.playgrounds.score.keeper.datatypes;
 
-
 import org.apache.flink.playgrounds.score.keeper.utils.DataGenerator;
 
 import javax.annotation.Nullable;

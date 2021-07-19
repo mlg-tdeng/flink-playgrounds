@@ -1,22 +1,18 @@
 package org.apache.flink.playgrounds.score.keeper.functions;
 
-import org.apache.flink.api.common.state.ListState;
-import org.apache.flink.api.common.state.ListStateDescriptor;
-import org.apache.flink.api.common.state.MapState;
-import org.apache.flink.api.common.state.MapStateDescriptor;
+import org.apache.flink.api.common.state.*;
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.playgrounds.score.keeper.datatypes.ProcessedScore;
 import org.apache.flink.playgrounds.score.keeper.datatypes.Score;
 import org.apache.flink.streaming.api.TimerService;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 
-import java.util.List;
+public class ScoreProcessFunction extends KeyedProcessFunction<Long, Score, ProcessedScore> {
 
-
-public class ScoreProcessFunction extends KeyedProcessFunction<Long, Score, Iterable<Score>> {
-
-    private ListState<Score> scoresState;
+    private transient ValueState<Character> sideState;
+    private transient ValueState<Boolean> eventArrivedState;
     private final long durationMsec;
 
     public ScoreProcessFunction(Time duration) {
@@ -25,38 +21,51 @@ public class ScoreProcessFunction extends KeyedProcessFunction<Long, Score, Iter
 
     @Override
     public void open(Configuration config) {
-        ListStateDescriptor<Score> scoresStateDescriptor =
-                new ListStateDescriptor<Score>("buffered scores", Score.class);
+        ValueStateDescriptor<Character> sideStateDescriptor =
+                new ValueStateDescriptor<Character>("side", Character.class);
+        sideState = getRuntimeContext().getState(sideStateDescriptor);
 
-        scoresState = getRuntimeContext().getListState(scoresStateDescriptor);
+        ValueStateDescriptor<Boolean> eventArrivedStateDescriptor =
+                new ValueStateDescriptor<Boolean>("event arrived", Boolean.class);
+        eventArrivedState = getRuntimeContext().getState(eventArrivedStateDescriptor);
     }
 
     @Override
-    public void processElement(Score score, Context context, Collector<Iterable<Score>> collector) throws Exception {
-        Iterable<Score> existingScores = scoresState.get();
+    public void processElement(Score score, Context context, Collector<ProcessedScore> collector) throws Exception {
         long eventTime = score.getEventTime();
+        // Round up eventTime to the end of the window containing this event.
+        long endOfWindow = (eventTime - (eventTime % durationMsec) + durationMsec - 1);
+
+        Boolean hasEventArrived = eventArrivedState.value();
+        Character currentSide = sideState.value();
+
         TimerService timerService = context.timerService();
 
-        if (existingScores == null) {
-            // First score of this key is found. start the trigger of timer
-            // Round up eventTime to the end of the window containing this event.
-            long endOfWindow = (eventTime - (eventTime % durationMsec) + durationMsec - 1);
-
-            // Schedule a callback for when the window has been completed.
+        if (hasEventArrived == null) {
+            // First score for this key is arrived. start the trigger of timer
             timerService.registerEventTimeTimer(endOfWindow);
+
+            eventArrivedState.update(true);
+            // Set side. Either side works.
+            sideState.update('A');
         }
 
-        // Add score to list state
-        scoresState.add(score);
+        // Create a new process score instance to send it out
+        ProcessedScore processedScore = new ProcessedScore(score.leaderboardsId,
+                currentSide, score.score, endOfWindow, score.leaderboardsType, score.entityId);
+
+        collector.collect(processedScore);
     }
 
     @Override
-    public void onTimer(long timestamp, OnTimerContext context, Collector<Iterable<Score>> out) throws Exception {
-        Iterable<Score> bufferedScores = scoresState.get();
+    public void onTimer(long timestamp, OnTimerContext context, Collector<ProcessedScore> out) throws Exception {
+        Character currentSide = sideState.value();
 
-        out.collect(bufferedScores);
-
-        // Clear buffered scores after it's collected
-        scoresState.clear();
+        // Flip side at timer callback
+        if (currentSide == 'A') {
+            sideState.update('B');
+        } else {
+            sideState.update('A');
+        }
     }
 }
