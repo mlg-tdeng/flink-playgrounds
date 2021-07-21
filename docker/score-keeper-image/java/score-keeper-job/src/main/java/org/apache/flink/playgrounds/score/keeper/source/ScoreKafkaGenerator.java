@@ -16,7 +16,7 @@ import java.util.Properties;
 public class ScoreKafkaGenerator {
 
     static final int BATCH_SIZE = 5;
-    public static final int SLEEP_MILLIS_PER_EVENT = 200;
+    private static final int SLEEP_MILLIS_PER_EVENT = 1000;
 
     public static void main(String[] args) throws Exception {
         final ParameterTool params = ParameterTool.fromArgs(args);
@@ -37,6 +37,7 @@ public class ScoreKafkaGenerator {
                 );
 
                 producer.send(record);
+                Thread.sleep(SLEEP_MILLIS_PER_EVENT);
             }
 
             // prepare for the next batch

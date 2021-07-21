@@ -5,11 +5,8 @@ import java.util.Random;
 
 public class DataGenerator {
 
-    private static final int NUMBER_OF_LEADERBOARDS = 5;
+    private static final int NUMBER_OF_LEADERBOARDS = 4;
     private static final int NUMBER_OF_ENTITIES = 1000;
-    private static final int SECONDS_BETWEEN_ENTITIES = 20;
-    private static final Instant beginTime = Instant.parse("2021-01-01T12:00:00.00Z");
-
     private transient long seed;
 
     /**
@@ -35,7 +32,7 @@ public class DataGenerator {
     }
 
     public Instant eventTime() {
-        return beginTime.plusSeconds(SECONDS_BETWEEN_ENTITIES * seed);
+        return Instant.now();
     }
 
     public short leaderboardsType() {
