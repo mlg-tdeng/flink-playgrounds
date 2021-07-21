@@ -10,20 +10,18 @@ import javax.annotation.Nullable;
 public class ProcessedScoreSerializationSchema implements KafkaSerializationSchema<ProcessedScore> {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    private String topic;
 
     public ProcessedScoreSerializationSchema() {
 
     }
-
-    public ProcessedScoreSerializationSchema(String topic) { this.topic = topic; }
 
     @Override
     public ProducerRecord<byte[], byte[]> serialize(
             final ProcessedScore message, @Nullable final Long timestamp
     ) {
         try {
-            return new ProducerRecord<>(topic, objectMapper.writeValueAsBytes(message));
+            // Send message to A or B side topic according to what's specified in message
+            return new ProducerRecord<>("output_"+ message.getSide(), objectMapper.writeValueAsBytes(message));
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Could not serialize record: " + message, e);
         }

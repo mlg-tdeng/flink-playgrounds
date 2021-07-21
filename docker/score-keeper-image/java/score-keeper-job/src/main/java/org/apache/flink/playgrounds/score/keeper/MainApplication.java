@@ -77,7 +77,7 @@ public class MainApplication {
         scoresKeeper
                 .addSink(new FlinkKafkaProducer<>(
                     "output",
-                    new ProcessedScoreSerializationSchema("output"),
+                    new ProcessedScoreSerializationSchema(),
                     kafkaProps,
                     FlinkKafkaProducer.Semantic.AT_LEAST_ONCE
         )).name("Kafka Sink");

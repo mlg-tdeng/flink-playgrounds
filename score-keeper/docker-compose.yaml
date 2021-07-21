@@ -20,7 +20,7 @@ version: "2.1"
 services:
   client:
     build: ../docker/score-keeper-image
-    image: tianyid/sk-snbx:v1.5
+    image: tianyid/sk-snbx:v1.6
     command: "flink run -d /opt/ScoreKeeperJob.jar --bootstrap.servers kafka:9092 --checkpointing"
     depends_on:
       - jobmanager
@@ -30,7 +30,7 @@ services:
     environment:
       - JOB_MANAGER_RPC_ADDRESS=jobmanager
   scoreevent-generator:
-    image: tianyid/sk-snbx:v1.5
+    image: tianyid/sk-snbx:v1.6
     command: "java -Dlog4j.configurationFile=/opt/flink/conf/log4j.properties -classpath /opt/ScoreKeeperJob.jar:/opt/flink/lib/* org.apache.flink.playgrounds.score.keeper.source.ScoreKafkaGenerator --bootstrap.servers kafka:9092 --topic input"
     depends_on:
       - kafka
@@ -65,7 +65,7 @@ services:
       KAFKA_LISTENERS: INSIDE://0.0.0.0:9092,OUTSIDE://0.0.0.0:9094
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
-      KAFKA_CREATE_TOPICS: "input:2:1, output:2:1"
+      KAFKA_CREATE_TOPICS: "input:2:1, output_A:2:1, output_B:2:1"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     ports:
       - 9094:9094
