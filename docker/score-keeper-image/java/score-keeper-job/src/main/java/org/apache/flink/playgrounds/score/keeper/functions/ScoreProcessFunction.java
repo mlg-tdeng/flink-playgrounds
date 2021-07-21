@@ -37,7 +37,6 @@ public class ScoreProcessFunction extends KeyedProcessFunction<Long, Score, Proc
         long endOfWindow = (eventTime - (eventTime % durationMsec) + durationMsec - 1);
 
         Boolean hasEventArrived = eventArrivedState.value();
-        Character currentSide = sideState.value();
 
         TimerService timerService = context.timerService();
 
@@ -50,9 +49,11 @@ public class ScoreProcessFunction extends KeyedProcessFunction<Long, Score, Proc
             sideState.update('A');
         }
 
+        Character currentSide = sideState.value();
+
         // Create a new process score instance to send it out
-        ProcessedScore processedScore = new ProcessedScore(score.leaderboardsId,
-                currentSide, score.score, endOfWindow, score.leaderboardsType, score.entityId);
+        ProcessedScore processedScore = new ProcessedScore(score.getLeaderboardsId(),
+                currentSide, score.getScore(), endOfWindow, score.getLeaderboardsType(), score.getEntityId());
 
         collector.collect(processedScore);
     }

@@ -64,7 +64,7 @@ public class Score implements Comparable<Score>, Serializable {
 
     @Override
     public String toString() {
-        return '@' + eventTime + ": " + entityId + "," +
+        return "@" + eventTime + ": " + entityId + "," +
                 leaderboardsId + '(' + leaderboardsType + " every " + snapshotInterval
                 + ") = " + score;
     }
@@ -98,4 +98,10 @@ public class Score implements Comparable<Score>, Serializable {
     public long getLeaderboardsId() {
         return leaderboardsId;
     }
+
+    public long getEntityId() { return entityId; }
+
+    public short getLeaderboardsType() { return leaderboardsType; }
+
+    public int getSnapshotInterval() { return snapshotInterval; }
 }
