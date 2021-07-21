@@ -11,18 +11,21 @@ public class ProcessedScore implements Serializable {
     private long windowEndTime;
     private short leaderboardsType;
     private long entityId;
+    private long eventTime;
 
     public ProcessedScore() {}
 
     public ProcessedScore(final long leaderboardsId, final char side,
                           final float score, final long windowEndTime,
-                          final short leaderboardsType, final long entityId) {
+                          final short leaderboardsType, final long entityId,
+                          final long eventTime) {
         this.leaderboardsId = leaderboardsId;
         this.side = side;
         this.score = score;
         this.windowEndTime = windowEndTime;
         this.leaderboardsType = leaderboardsType;
         this.entityId = entityId;
+        this.eventTime = eventTime;
     }
 
     public long getLeaderboardsId() {
@@ -73,6 +76,10 @@ public class ProcessedScore implements Serializable {
         this.entityId = entityId;
     }
 
+    public long getEventTime() { return eventTime; }
+
+    public void setEventTime(long eventTime) { this.eventTime = eventTime; }
+
     @Override
     public boolean equals(final Object other) {
         if (this == other) {
@@ -87,20 +94,21 @@ public class ProcessedScore implements Serializable {
                 entityId == that.entityId &&
                 windowEndTime == that.windowEndTime &&
                 score == that.score &&
-                side == that.side;
+                side == that.side &&
+                eventTime == that.eventTime;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
                 leaderboardsId, side, score, windowEndTime,
-                leaderboardsType, entityId
+                leaderboardsType, entityId, eventTime
         );
     }
 
     @Override
     public String toString() {
-        return leaderboardsId +
+        return leaderboardsId + " @" + eventTime +
                 ": (side) " + side +
                 " (score) " + score +
                 " (windowEndTime) " + windowEndTime +

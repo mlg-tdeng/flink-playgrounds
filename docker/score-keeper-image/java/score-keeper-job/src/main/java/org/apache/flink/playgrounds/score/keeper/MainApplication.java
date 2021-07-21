@@ -53,7 +53,7 @@ public class MainApplication {
         DataStream<Score> scores = env
                 .addSource(myConsumer
                         // Set up event time processing and watermark strategy
-                        .assignTimestampsAndWatermarks(WatermarkStrategy.<Score>forBoundedOutOfOrderness(Duration.ofSeconds(20))
+                        .assignTimestampsAndWatermarks(WatermarkStrategy.<Score>forBoundedOutOfOrderness(Duration.ofSeconds(0))
                                 .withTimestampAssigner((score, timestamp) -> score.getEventTime())
                         ))
                 .name("Kafka Score Source");
