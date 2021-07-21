@@ -80,6 +80,14 @@ public class ProcessedScore implements Serializable {
 
     public void setEventTime(long eventTime) { this.eventTime = eventTime; }
 
+    public void flipSide () {
+        if (this.getSide() == 'A') {
+            this.setSide('B');
+        } else {
+            this.setSide('A');
+        }
+    }
+
     @Override
     public boolean equals(final Object other) {
         if (this == other) {

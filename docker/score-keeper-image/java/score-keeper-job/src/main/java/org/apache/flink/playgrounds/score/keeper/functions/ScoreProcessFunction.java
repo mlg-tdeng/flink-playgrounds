@@ -9,12 +9,14 @@ import org.apache.flink.streaming.api.TimerService;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 
+import java.io.IOException;
 import java.util.List;
 
 public class ScoreProcessFunction extends KeyedProcessFunction<Long, Score, ProcessedScore> {
 
     private transient ValueState<Character> sideState;
     private transient ValueState<Long> lastWindowEndTimeState;
+    private transient ListState<ProcessedScore> savedProcessedScoresState;
     private final long durationMsec;
 
     public ScoreProcessFunction(Time duration) {
@@ -30,6 +32,10 @@ public class ScoreProcessFunction extends KeyedProcessFunction<Long, Score, Proc
         ValueStateDescriptor<Long> lastWindowEndTimeDescriptor =
                 new ValueStateDescriptor<Long>("last window end time", Long.class);
         lastWindowEndTimeState = getRuntimeContext().getState(lastWindowEndTimeDescriptor);
+
+        ListStateDescriptor<ProcessedScore> savedProcessedScoresDescriptor =
+                new ListStateDescriptor<ProcessedScore>("list of saved processed scores", ProcessedScore.class);
+        savedProcessedScoresState = getRuntimeContext().getListState(savedProcessedScoresDescriptor);
     }
 
     @Override
@@ -42,7 +48,7 @@ public class ScoreProcessFunction extends KeyedProcessFunction<Long, Score, Proc
 
         Character currentSide = sideState.value();
         if (currentSide == null) {
-            // First score for this key is arrived. pick a side
+            // First score for this key is arrived. pick a side and register a timer
             sideState.update('A');
             timerService.registerEventTimeTimer(endOfWindow);
         }
@@ -54,7 +60,6 @@ public class ScoreProcessFunction extends KeyedProcessFunction<Long, Score, Proc
         } else {
             if (endOfWindow != lastWindowEndTime.longValue()) {
                 // If this element's calculated doesn't equal to last saved one, trigger a timer
-                System.out.println("-------------- new window end time, start to register a new timer " + endOfWindow);
                 timerService.registerEventTimeTimer(endOfWindow);
 
                 lastWindowEndTimeState.update(endOfWindow);
@@ -62,29 +67,36 @@ public class ScoreProcessFunction extends KeyedProcessFunction<Long, Score, Proc
         }
 
         // Create a new process score instance to send it out
-        System.out.println("--------------- Current Side of Processed Score " + sideState.value());
         ProcessedScore processedScore = new ProcessedScore(score.getLeaderboardsId(),
                 sideState.value(), score.getScore(), endOfWindow, score.getLeaderboardsType(), score.getEntityId(), score.getEventTime());
 
-        if (processedScore.getLeaderboardsId() == 2021100000) {
-            collector.collect(processedScore);
-        }
+        collector.collect(processedScore);
+
+        // After emitting the score, store this processed score with change of side to state.
+        // This is for syncing between A and B side
+        processedScore.flipSide();
+        savedProcessedScoresState.add(processedScore);
     }
 
     @Override
     public void onTimer(long timestamp, OnTimerContext context, Collector<ProcessedScore> out) throws Exception {
-        System.out.println("-------------- current key: " + context.getCurrentKey());
-        System.out.println("-------------- onTimer is called at " + timestamp);
-        System.out.println("-------------- current end timestamp: " + context.timestamp());
-        System.out.println("-------------- current side: " + sideState.value() + ". Flipping side...");
-
         // Flip side at timer callback
+        flipSide();
+
+        // Emit all saved processed scores. This is pretty expensive
+        Iterable<ProcessedScore> savedProcessedScores = savedProcessedScoresState.get();
+        for (ProcessedScore processedScore : savedProcessedScores) {
+            out.collect(processedScore);
+        }
+        // Clear out all saved processed scores for releasing space
+        savedProcessedScoresState.clear();
+    }
+
+    public void flipSide() throws Exception {
         if (sideState.value() == 'A') {
             sideState.update('B');
         } else {
             sideState.update('A');
         }
-
-        System.out.println("-------------- Flipping done. current side: " + sideState.value() );
     }
 }
