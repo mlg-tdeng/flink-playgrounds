@@ -44,7 +44,8 @@ public class DataGenerator {
     }
 
     public int snapshotInterval() {
-        return (int) aLong(300L, 3000L, 1650L, 300L);
+        // in Minute
+        return (int) aLong(5L, 6L);
     }
 
     private long aLong(long min, long max) {
