@@ -36,16 +36,16 @@ public class ScoreProcessFunction extends KeyedProcessFunction<Long, Score, Proc
         // Round up eventTime to the end of the window containing this event.
         long endOfWindow = (eventTime - (eventTime % durationMsec) + durationMsec - 1);
 
-        Boolean hasEventArrived = eventArrivedState.value();
-
         TimerService timerService = context.timerService();
 
-        if (hasEventArrived == null) {
-            // First score for this key is arrived. start the trigger of timer
-            timerService.registerEventTimeTimer(endOfWindow);
+        System.out.println("-------------- register timer: " + score.toString() + " / for end time " + endOfWindow);
+        timerService.registerEventTimeTimer(endOfWindow);
 
+        Boolean hasEventArrived = eventArrivedState.value();
+
+        if (hasEventArrived == null) {
+            // First score for this key is arrived. pick a side
             eventArrivedState.update(true);
-            // Set side. Either side works.
             sideState.update('A');
         }
 
@@ -60,6 +60,10 @@ public class ScoreProcessFunction extends KeyedProcessFunction<Long, Score, Proc
 
     @Override
     public void onTimer(long timestamp, OnTimerContext context, Collector<ProcessedScore> out) throws Exception {
+        System.out.println("-------------- current key" + context.getCurrentKey());
+        System.out.println("-------------- onTimer is called at " + timestamp);
+        System.out.println("-------------- current end timestamp" + context.timestamp());
+
         Character currentSide = sideState.value();
 
         // Flip side at timer callback

@@ -1,7 +1,6 @@
 package org.apache.flink.playgrounds.score.keeper;
 
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.playgrounds.score.keeper.datatypes.ProcessedScore;
 import org.apache.flink.playgrounds.score.keeper.datatypes.ProcessedScoreSerializationSchema;
@@ -17,6 +16,7 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
+import java.time.Duration;
 import java.util.Properties;
 
 public class MainApplication {
@@ -50,8 +50,13 @@ public class MainApplication {
         FlinkKafkaConsumer<Score> myConsumer = new FlinkKafkaConsumer<Score>(inputTopic, new ScoreDeserializationSchema(), kafkaProps);
 
         // 1. Source
-        DataStream<Score> scores = env.
-                addSource(myConsumer).name("Kafka Score Source");
+        DataStream<Score> scores = env
+                .addSource(myConsumer
+                        // Set up event time processing and watermark strategy
+                        .assignTimestampsAndWatermarks(WatermarkStrategy.<Score>forBoundedOutOfOrderness(Duration.ofSeconds(20))
+                                .withTimestampAssigner((score, timestamp) -> score.getEventTime())
+                        ))
+                .name("Kafka Score Source");
 
         if (inflictBackpressure) {
             // Force a network shuffle so that the backpressure will affect the buffer pools
@@ -65,7 +70,7 @@ public class MainApplication {
         DataStream<ProcessedScore> scoresKeeper = scores
                 .keyBy(e -> e.getLeaderboardsId())
 //                .window(TumblingEventTimeWindows.of(Time.minutes(5)))
-                .process(new ScoreProcessFunction(Time.minutes(5)))
+                .process(new ScoreProcessFunction(Time.minutes(1)))
                 .name("Process Scores");
 
         // 3. Sink
