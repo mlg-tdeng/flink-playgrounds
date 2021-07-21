@@ -8,9 +8,6 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.PriorityQueue;
 import java.util.Properties;
 
 public class ScoreKafkaGenerator {
@@ -37,7 +34,6 @@ public class ScoreKafkaGenerator {
                 );
 
                 producer.send(record);
-                Thread.sleep(SLEEP_MILLIS_PER_EVENT);
             }
 
             // prepare for the next batch
